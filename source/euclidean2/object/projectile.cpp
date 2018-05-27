@@ -96,7 +96,7 @@ void projectile_update(float dt)
 		proj.position.z += proj.velocity.z * dt;
 
 		// Check for collision
-		for(int j = 0; j < boats.size(); j++)
+		for(size_t j = 0; j < boats.size(); j++)
 		{
 			boat_t b = boats.at(j);
 
@@ -105,6 +105,7 @@ void projectile_update(float dt)
 
 			if(dist < rad)
 			{
+				cannon.score++;
 				boats.erase(boats.begin() + j);
 				active_list.erase(active_list.begin() + i);
 			}

@@ -1,5 +1,5 @@
-# Assignment_2
-COSC1187 Assignment 2
+# Assignment_1
+COSC1187 Assignment 1
 
 Copyright 2018 Tim Davis and Jesse Buhagiar
 
@@ -61,4 +61,3 @@ Then edit out the _SECOND_ commit message in your editor
 Then type _git push -u origin +mybranch_
 
 You're mistake has now been fixed :^)
-

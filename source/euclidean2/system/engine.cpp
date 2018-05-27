@@ -36,15 +36,18 @@ water_t     water;
 cannon_t	cannon;
 
     // Sun (which is bound to GL_LIGHT0)
-GLfloat sun_amb[]   = {0.0f, 0.0f, 0.0f, 1.0f};
+GLfloat sun_amb[]   = {0.1f, 0.0f, 0.1f, 1.0f};
 GLfloat sun_dif[]   = {0.7f, 0.7f, 0.7f, 1.0f};
 GLfloat sun_pos[]   = {-9.0f, 18.0f, -7.0f, 0.0f};
-GLfloat sun_spec[]  = {0.5f, 1.0f, 1.0f, 1.0f};
+GLfloat sun_spec[]  = {1.0f, 1.0f, 1.0f, 1.0f};
 
 static float t = 0.0f;
 
 extern window_t* hwnd; // YEAH LIVE LIFE ON THE EDGE!
 
+static bool gameOver = false;
+
+static float zoomZ = 0.0f;
 static void i_specialKeyPressed(int key, int x, int y)
 {
 	switch(key)
@@ -116,6 +119,10 @@ static void i_keyPressed(unsigned char c, int x, int y)
             engine.lighting = !engine.lighting;
             break;
 
+        case 'f':
+            engine.fogEnable = !engine.fogEnable;
+            break;
+
         case 'c':
             if(cam.mode == CAMERA_MODES::CAM_LOCKED)
                 cam.mode = CAMERA_MODES::CAM_DEBUG;
@@ -123,8 +130,16 @@ static void i_keyPressed(unsigned char c, int x, int y)
                 cam.mode = CAMERA_MODES::CAM_LOCKED;
             break;
 
+        case 'k':
+            engine.l0Enable = !engine.l0Enable;
+            break;
+
         case 't':
             engine.textures = !engine.textures;
+            break;
+
+        case 'm':
+            engine.mouseControl = !engine.mouseControl;
             break;
 
         case ' ':
@@ -159,11 +174,16 @@ static void i_keyPressed(unsigned char c, int x, int y)
             water_decreaseTesselations(water);
             break;
 
+        case '\\':
+            engine.holdMouse = !engine.holdMouse;
+            break;
+
         case 127: // DEL
             engine.debug = !engine.debug;
             break;
 
         case 27: // ESC
+        case 'q':
             #ifdef FREEGLUT
                 glutLeaveMainLoop();
             #else
@@ -176,6 +196,30 @@ static void i_keyPressed(unsigned char c, int x, int y)
     }
 }
 
+float zoom = 1.0f;
+static void i_mouse(int button, int state, int x, int y)
+{
+    if(cam.mode == CAMERA_MODES::CAM_LOCKED)
+    {
+        if(button == 3)
+        {
+            if(state == GLUT_DOWN)
+            {
+                glTranslatef(0.0f, 0.0f, 0.1f);
+                zoomZ += 0.1f;
+            }
+        }
+        else if(button == 4)
+        {
+            if(state == GLUT_DOWN)
+            {
+                glTranslatef(0.0f, 0.0f, -0.1f);
+                zoomZ -= 0.1f;
+            }
+        }
+    }
+}
+
 static void i_mouseMotion(int x, int y)
 {
     float dx = static_cast<float>(x) - static_cast<float>(hwnd->width / 2);
@@ -184,6 +228,13 @@ static void i_mouseMotion(int x, int y)
     cam_yaw(cam, dx * engine.dt);
     cam_pitch(cam, dy * engine.dt);
     cam_update(cam);
+
+    if(cam.mode == CAMERA_MODES::CAM_LOCKED && engine.mouseControl)
+    {
+        cannon.yaw += dx * engine.dt;
+        cannon.pitch  += dy * engine.dt;     
+    }
+
 }
 
 // Draw 3D axes
@@ -253,10 +304,52 @@ static void e_pumpGLError(void)
     }
 }
 
-//boat_t b;
+static void r_reshapeFunc(int w, int h)
+{
+    hwnd->width = w;
+    hwnd->height = h;
+    cam_refresh(cam);
+}
 
 std::vector<boat_t> boats;
 
+static void drawHealth()
+{
+    // DRAW HEALTH BAR
+    // First we need to save some OpenGL states on the attribute stack
+    glPushAttrib(GL_VIEWPORT_BIT | GL_CURRENT_BIT | GL_ENABLE_BIT); // Save the current viewport info, enabled info and context information
+
+    // Save the current projection matrix (so we can restore it later)
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
+    glLoadIdentity();
+
+    glOrtho(-1.0f, 1.0f, -1.0f, 1.0f, -1.0f, 1.0f);
+
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
+    glLoadIdentity();
+    
+    glDisable(GL_LIGHTING);
+    glDisable(GL_DEPTH_TEST);
+    glColor3f(0.0f, 0.0f, 1.0f);
+    glBegin(GL_QUADS);
+        glVertex2f(0.7, 1.0);
+        glVertex2f(0.7 + (cannon.hp * 0.003), 1.0f);
+        glVertex2f(0.7 + (cannon.hp * 0.003), 0.95);
+        glVertex2f(0.7, 0.95);
+    glEnd();
+
+    glPopMatrix();
+
+    glMatrixMode(GL_PROJECTION);
+    glPopMatrix();
+
+    glPopAttrib();
+}
+
+
+float meme = 1.0f;
 /**
  *	Engine draw function
  */
@@ -289,7 +382,7 @@ static void draw(void)
     {
         glTranslatef(0.5f, -1.0f, -5.0f);
         glRotatef(cam.pitch, 1.0f, 0.0f, 0.0f);
-        glRotatef(cam.yaw, 0.0f, 1.0f, 0.0f);
+        glRotatef(cam.yaw * sin(5.0f), 0.0f, 1.0f, 0.0f);
 
         glPushMatrix();
         glTranslatef(1.0f, 1.0f, 1.0f);
@@ -312,9 +405,21 @@ static void draw(void)
     else
         glDisable(GL_TEXTURE_2D);
 
-    glEnable(GL_LIGHT0); 
+    if(engine.l0Enable)
+        glEnable(GL_LIGHT0);
+    else
+        glDisable(GL_LIGHT0);
     glLightfv(GL_LIGHT0, GL_POSITION, sun_pos);
     
+
+    if(engine.fogEnable)
+    {
+        glEnable(GL_FOG);
+    }
+    else
+    {
+        glDisable(GL_FOG);
+    }
 
 	cannon_draw(cannon);
     projectile_draw();
@@ -325,6 +430,19 @@ static void draw(void)
     }
 
     water_draw(water, engine.drawNormals);
+
+    if(gameOver)
+    {
+        r_drawString(hwnd->width / 2 - 10, hwnd->height / 2, "G A M E   O V E R ! ! !");
+    }
+
+    sprintf(str, "Score: %d", cannon.score);
+    r_drawString(hwnd->width - 100, 26.,str);
+
+    drawHealth();
+
+    // Uncomment this for some Intestellar type shit
+    //glScalef(zoom, zoom, 1.0f);
 
     if(engine.debug)
     {
@@ -364,8 +482,13 @@ void e_update(void)
     float dt = 0.0f;
     std::string direction[4] = {"north", "south", "east", "west"};
 
-    if(engine.running)
-        t = static_cast<float>(glutGet(GLUT_ELAPSED_TIME)) / MILLISECOND_TIME; // Number of ms since glutInit() was called
+    if(cannon.hp <= 0)
+    {
+        gameOver = true;
+        engine.running = false;
+    }
+
+    t = static_cast<float>(glutGet(GLUT_ELAPSED_TIME)) / MILLISECOND_TIME; // Number of ms since glutInit() was called
 
     // Skip the first frame to prevent / 0
     // Also keep the clock running even if the sim is paused to dt doesn't become huge
@@ -376,8 +499,15 @@ void e_update(void)
         return;
     } 
 
-    glutSetCursor(GLUT_CURSOR_NONE);
-    glutWarpPointer(hwnd->width/2, hwnd->height/2);
+    if(engine.holdMouse)
+    {
+        glutSetCursor(GLUT_CURSOR_NONE);
+        glutWarpPointer(hwnd->width/2, hwnd->height/2);      
+    }
+    else
+    {
+        glutSetCursor(GLUT_CURSOR_LEFT_ARROW);  
+    }
     
     if(engine.running)
     {
@@ -396,7 +526,7 @@ void e_update(void)
             boat_update(boats.at(i), t, dt, 3);
         }
 
-        if((timer_counter > 1.0f))
+        if((timer_counter > 2.0f))
         {
             boat_t tmp_b;
 
@@ -468,6 +598,18 @@ static void e_glInit()
     glLightfv(GL_LIGHT0, GL_DIFFUSE, sun_dif);
     glLightfv(GL_LIGHT0, GL_POSITION, sun_pos);
     glLightfv(GL_LIGHT0, GL_SPECULAR, sun_spec);
+
+    GLfloat fog[4] = {0.7f, 0.7f, 0.7f, 1.0f};
+    // Fog
+    glEnable(GL_FOG);
+    glFogi(GL_FOG_MODE, GL_EXP);
+    glFogfv(GL_FOG_COLOR, fog);
+    glFogf(GL_FOG_DENSITY, 0.125);
+    glFogf(GL_FOG_START, 9.0f);
+    glFogf(GL_FOG_END, 25.0f);
+
+    glDisable(GL_FOG);
+
 }
 
 void e_init(int argc, char** argv)
@@ -500,6 +642,11 @@ void e_init(int argc, char** argv)
     engine.running          = true;
     engine.lighting         = true;
     engine.textures         = true;
+    engine.l0Enable         = true;
+    engine.fogEnable        = true;
+    engine.holdMouse        = true;
+    engine.mouseControl     = true;
+    gameOver = false;
 
     cam_init(cam, hwnd->width, hwnd->height);
 
@@ -508,7 +655,9 @@ void e_init(int argc, char** argv)
 	glutIdleFunc(e_update);
     glutKeyboardFunc(i_keyPressed);
     glutSpecialFunc(i_specialKeyPressed);
+    glutMouseFunc(i_mouse);
 	glutPassiveMotionFunc(i_mouseMotion);
+    glutReshapeFunc(r_reshapeFunc);
 
     #ifdef FREEGLUT
         glutCloseFunc(e_shutdown);
@@ -521,6 +670,7 @@ void e_init(int argc, char** argv)
 	skybox_init();
 
 	cannon_init(cannon, 10, 10, 1.0f, 1.0f, 0.1f);
+    cannon.yaw = 90.0f;
 
     glutMainLoop();
 

@@ -37,7 +37,8 @@ struct cannon_t
 
 	texture_t	islandTex;
 
-	int 		hp = 100;
+	int 		hp = 200;
+	int   		score = 0;
 };
 
 /**

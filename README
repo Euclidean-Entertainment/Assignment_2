@@ -1,0 +1,34 @@
+___  ___ ________  ___ ___________  _____  ___ _____ _____         ___________ 
+|  \/  ||  ___|  \/  ||  ___| ___ \|  _  |/ _ \_   _/  ___|       |____ |  _  \
+| .  . || |__ | .  . || |__ | |_/ /| | | / /_\ \| | \ `--.            / / | | |
+| |\/| ||  __|| |\/| ||  __|| ___ \| | | |  _  || |  `--. \           \ \ | | |
+| |  | || |___| |  | || |___| |_/ /\ \_/ / | | || | /\__/ /       .___/ / |/ / 
+\_|  |_/\____/\_|  |_/\____/\____/  \___/\_| |_/\_/ \____/        \____/|___/  
+==================================================================================
+By Jesse Buhagiar (s3600244) and Tim Davis (s3588689)
+
+Memeboats 3D GL is a game for COSC1186, 2018.
+
+Built on the Euclidean2 engine (not really)
+
+================HOW TO BUILD================
+1. From the terminal, run 'cmake CMakeLists.txt' from the root directory
+2. Run make
+3. From the root directory, type ./bin/assignment2. The game will run.
+
+================CONTROLS================
+h:          Stop the engine from running
+w:          Increase Cannon Power.
+s:          Decrease Cannon power.
+<UP>:       Increase the pitch of the island cannon.
+<LEFT>:     Yaw cannon tower left.
+<RIGHT>:    Yaw cannon tower right.
+
+<DEL>:      Debug Mode.
+<space>:    Fire island cannon.
+
+o/O:        Raise/Lower right boat cannon
+t:          Enable drawing of tangent vectors (for waves)
+n:          Enable drawing of normal vectors (for waves)
+ESC:        Quit the game
+

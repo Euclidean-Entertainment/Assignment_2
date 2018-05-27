@@ -53,6 +53,7 @@ void cam_refresh(camera_t& cam)
     int width = glutGet(GLUT_WINDOW_WIDTH);
     int height = glutGet(GLUT_WINDOW_HEIGHT);
 
+    glViewport(0, 0, width, height);
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     gluPerspective(cam.fov, static_cast<GLfloat>(width/height), 0.0001, 1000.0f);

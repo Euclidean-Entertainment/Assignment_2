@@ -149,7 +149,6 @@ static void cannon_drawBase(cannon_t& cannon)
 	glPopMatrix();
 }
 
-static float rot = 0.0f;
 void cannon_draw(cannon_t& cannon)
 {
 	float theta;

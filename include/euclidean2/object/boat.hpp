@@ -10,8 +10,9 @@
 
 struct boat_t
 {
-	vec3_t     position;	     /**< Boat vector */
-    vec3_t     velocity;         /**< Boat velocity vector */        
+	vec3_t      position;	     /**< Boat vector */
+    vec3_t      normal;  
+    vec3_t      velocity;         /**< Boat velocity vector */        
 	material_t mat; 		     /**< Boat material */
 
 	float mag;
@@ -24,6 +25,9 @@ struct boat_t
 
     float dydx;
     float dydz;
+
+    float cRotX;
+    float cRotZ;
 
     float delayTime;
 

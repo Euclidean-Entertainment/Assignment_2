@@ -49,15 +49,69 @@ void boat_spawn(boat_t& b, float x, float y, float z)
 	material_create(b.mat, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f, 2.0f);
 }
 
+float radius = 0.5f;
+float height = 1.5f;
+int stacks = 10;
+int slices = 10;
 void boat_draw(boat_t& b)
 {
 	glPushMatrix();
-	glTranslatef(b.position.x, b.position.y, b.position.z);
+	glTranslatef(b.position.x, b.position.y - 0.1f, b.position.z);
+    glRotatef(ANG_2_DEGREES(b.dydz) * 0.5f, 1.0f, 0.0f, 0.0f);
+    glRotatef(ANG_2_DEGREES(b.dydx) * 0.5f, 0.0f, 0.0f, 1.0f);
 
 	material_bind(b.mat);
 	glutSolidCube(0.2f);
 
+    material_bind(b.mat);
+
+    // Haha, this doesn't work at all!!
+    glPushMatrix();
+    glScalef(0.1f, 0.1f, 0.1f);
+    glTranslatef(0.0f, 0.4f, 0.0f);
+
+    float theta;
+    float r;
+    glBegin(GL_TRIANGLE_STRIP);
+    for(int i = 0; i <= slices; i++)
+    {
+        theta = (static_cast<float>(i)/10) * 2.0f * M_PI;
+        glNormal3f(0.0f, -1.0f, 0.0f);
+        glVertex3f(0.0f, 0.0f, 0.0f);
+        glNormal3f(0.0f, -1.0f, 0.0f);
+        glVertex3f(radius * sinf(theta), 0.0f, radius * cosf(theta));
+    }   
+    glEnd();    
+
+    for(int i = 0; i <= stacks; i++)
+    {
+        r = (static_cast<float>(i)/stacks) * height;
+        glBegin(GL_TRIANGLE_STRIP);
+        for(int j = 0; j <= slices; j++)
+        {
+            theta = (static_cast<float>(j)/slices) * 2.0f * M_PI;
+            glNormal3f(sinf(theta), 0, cosf(theta));
+            glVertex3f(sinf(theta) * radius, r, cosf(theta) * radius);
+            glNormal3f(sinf(theta), 0, cosf(theta));
+            glVertex3f(sinf(theta) * radius, 0.0f + (1/stacks * height), cosf(theta) * radius); 
+        }
+        glEnd();
+    }
+    
+    glBegin(GL_TRIANGLE_STRIP);
+    for(int i = 0; i <= slices; i++)
+    {
+        theta = (static_cast<float>(i)/slices) * 2.0f * M_PI;
+        glNormal3f(0.0f, -1.0f, 0.0f);
+        glVertex3f(0.0f, height, 0.0f);
+        glNormal3f(0.0f, -1.0f, 0.0f);
+        glVertex3f(radius * sinf(theta), height, radius * cosf(theta));
+    }
+    glEnd();
+
+
 	glPopMatrix();
+    glPopMatrix();
 }
 
 void boat_update(boat_t& b, float t, float dt, int numWaves)
@@ -69,8 +123,8 @@ void boat_update(boat_t& b, float t, float dt, int numWaves)
 	for(int n = 0; n < numWaves; n++)
 	{
 		wave += m_calculateSine(a[n], kx[n], kz[n], w[n], b.position.x, b.position.z, t);
-        dydx += m_calcDYDX(a[n], kx[n], kz[n], w[n], b.position.x, b.position.z, t);
-        dydz += m_calcDYDZ(a[n], kx[n], kz[n], w[n], b.position.x, b.position.z, t);
+        dydx += m_calcDYDX(a[n], kx[n], kz[n], w[n], b.position.x, 0, t);
+        dydz += m_calcDYDZ(a[n], kx[n], kz[n], w[n], 0, b.position.z, t);
 	}
 
     float theta = ARTAN(b.position.z/b.position.x);
@@ -138,19 +192,23 @@ void boat_shoot(boat_t& b)
     if(b.position.x < 0.0f)
     {
         vx = b.position.x / TAN(270.0f) * 0.1f;
+        b.cRotX = b.position.x / TAN(270.0f);
     }
     else
     {
         vx = b.position.x / TAN(90.0f) * 1.1f;
+        b.cRotX = b.position.x / TAN(90.0f);
     }
 
     if(b.position.z < 0.0f)
     {
         vz = b.position.z / TAN(270.0f) * 0.1f;
+        b.cRotZ = b.position.z / TAN(270.0f);
     }
     else
     {
         vz = b.position.z / TAN(90.0f) * 1.1f;
+        b.cRotZ = b.position.z / TAN(90.0f);
     }
 
     projectile_create(b.position.x, b.position.y + 0.2f, b.position.z, 35.0f, vx, vz, 4.5f);

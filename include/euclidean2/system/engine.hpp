@@ -23,6 +23,10 @@ typedef struct
     bool        drawNormals;        /**< Should we draw the normals? */
     bool        lighting;           /**< Is lighting enabled or disabled? */
     bool        textures;           /**< Is texturing enabled or disabled? */
+    bool        l0Enable;           /**< Should we enable GL_LIGHT0??? */
+    bool        fogEnable;          /**< Did somebody say SILENT HILL?? */
+    bool        holdMouse;          /**< Hold the mouse to the screen? */
+    bool        mouseControl;       /**< Can we control the cannon with our mouse */
 
     // Timing related stuff
     float       time_elapsed;       /**< Elapsed time since our program started (in ms) */
